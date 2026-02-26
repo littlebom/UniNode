@@ -1,0 +1,18 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../src",
+  "testRegex": ".*\\.integration\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(ts|js)$": "ts-jest"
+  },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(@noble|@scure)/)"
+  ],
+  "testEnvironment": "node",
+  "testTimeout": 30000,
+  "moduleNameMapper": {
+    "^@unilink/dto$": "<rootDir>/../../../packages/dto/src",
+    "^@unilink/crypto$": "<rootDir>/../../../packages/crypto/src",
+    "^@unilink/vc-core$": "<rootDir>/../../../packages/vc-core/src"
+  }
+}

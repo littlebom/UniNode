@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.node.production
+.env.portal.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Docker secrets (never commit)
+deploy/docker/secrets/
+deploy/docker/ssl/
+deploy/docker/mtls/
+deploy/docker/backup/
+
+# Expo
+.expo/
+ios/
+android/
+
+# Misc
+*.log
+npm-debug.log*
+pnpm-debug.log*

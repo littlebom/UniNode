@@ -1,0 +1,41 @@
+{
+  "name": "@unilink/vc-core",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@veramo/core": "^6.0.0",
+    "@veramo/did-manager": "^6.0.0",
+    "@veramo/did-provider-web": "^6.0.0",
+    "@veramo/key-manager": "^6.0.0",
+    "@veramo/credential-w3c": "^6.0.0",
+    "@veramo/did-resolver": "^6.0.0",
+    "@veramo/kms-local": "^6.0.0",
+    "@digitalbazaar/vc-status-list": "^7.0.0",
+    "did-resolver": "^4.1.0",
+    "web-did-resolver": "^2.0.0",
+    "json-canonicalize": "^1.0.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.5",
+    "@unilink/dto": "workspace:*",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
+    "@types/jest": "^29.5.12"
+  }
+}

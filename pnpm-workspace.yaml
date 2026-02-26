@@ -1,0 +1,4 @@
+packages:
+  - 'apps/uni-node'
+  - 'apps/uni-node-portal'
+  - 'packages/*'
