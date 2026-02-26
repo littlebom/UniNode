@@ -16,9 +16,11 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
+COPY package.json pnpm-workspace.yaml ./
 COPY apps/uni-node ./apps/uni-node
 COPY tsconfig.base.json ./
-RUN pnpm --filter uni-node build
+RUN pnpm --filter @unilink/dto --filter @unilink/crypto --filter @unilink/vc-core build && \
+    pnpm --filter uni-node build
 
 FROM base AS runner
 WORKDIR /app

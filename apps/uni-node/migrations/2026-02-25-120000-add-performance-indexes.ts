@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddPerformanceIndexes1709000000 implements MigrationInterface {
-  name = 'AddPerformanceIndexes1709000000'
+export class AddPerformanceIndexes20260225120000 implements MigrationInterface {
+  name = 'AddPerformanceIndexes20260225120000'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Issued VCs: fast lookup by student_id (most common query pattern)

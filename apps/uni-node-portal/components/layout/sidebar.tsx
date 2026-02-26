@@ -11,7 +11,7 @@ import { useUIStore } from '@/lib/stores/ui-store'
 import { navItems } from './nav-items'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 function NavLinks({ collapsed }: { collapsed: boolean }): React.ReactElement {
   const pathname = usePathname()
@@ -104,9 +104,6 @@ export function Sidebar(): React.ReactElement {
 
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild className="lg:hidden">
-          <span /> {/* Trigger controlled externally from Header */}
-        </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <div className="flex h-14 items-center border-b px-4">
             <Link href="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>

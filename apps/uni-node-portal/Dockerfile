@@ -16,13 +16,15 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
+COPY package.json pnpm-workspace.yaml ./
 COPY apps/uni-node-portal ./apps/uni-node-portal
 COPY tsconfig.base.json ./
 ARG NEXT_PUBLIC_API_URL=http://localhost/api/v1
 ARG NEXT_PUBLIC_NODE_API_URL=http://localhost/unilink/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_NODE_API_URL=$NEXT_PUBLIC_NODE_API_URL
-RUN pnpm --filter uni-node-portal build
+RUN pnpm --filter @unilink/dto --filter @unilink/ui build && \
+    pnpm --filter uni-node-portal build
 
 FROM base AS runner
 WORKDIR /app

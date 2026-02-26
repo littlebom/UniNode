@@ -46,6 +46,12 @@ export const authConfig: NextAuthConfig = {
       clientId: process.env.AUTHENTIK_CLIENT_ID ?? '',
       clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? '',
       authorization: {
+        // In Docker, the OIDC issuer is an internal hostname (e.g. registry-authentik:9000)
+        // but the browser must redirect to a browser-accessible URL (e.g. localhost:9000).
+        // AUTHENTIK_AUTHORIZATION_URL overrides the discovered authorization_endpoint.
+        ...(process.env.AUTHENTIK_AUTHORIZATION_URL
+          ? { url: process.env.AUTHENTIK_AUTHORIZATION_URL }
+          : {}),
         params: {
           scope: 'openid profile email groups',
         },

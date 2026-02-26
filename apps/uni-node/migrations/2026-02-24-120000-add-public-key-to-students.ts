@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddPublicKeyToStudents1708771200000 implements MigrationInterface {
-  name = '2026-02-24-120000-add-public-key-to-students'
+export class AddPublicKeyToStudents20260224120000 implements MigrationInterface {
+  name = 'AddPublicKeyToStudents20260224120000'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
