@@ -1,13 +1,16 @@
 import NextAuth from 'next-auth'
 import type { NextAuthConfig } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
 
 /**
- * NextAuth v5 configuration with Authentik OpenID Connect provider.
+ * NextAuth v5 configuration with Credentials provider.
+ * Authenticates against UniRegistry API via POST /auth/login.
  *
- * Role mapping:
- * - Authentik group "unilink-admin"     → admin
- * - Authentik group "unilink-registrar" → registrar
- * - Default                              → viewer
+ * Role mapping (Registry -> Portal):
+ * - super_admin  -> admin
+ * - node_admin   -> admin
+ * - staff        -> viewer
+ * - default      -> viewer
  */
 
 declare module 'next-auth' {
@@ -24,49 +27,97 @@ declare module 'next-auth' {
 
   interface User {
     role?: 'admin' | 'registrar' | 'viewer'
+    accessToken?: string
+    refreshToken?: string
   }
 }
 
-// JWT token fields are typed via callback parameters
-// next-auth v5 uses @auth/core/jwt internally
+const REGISTRY_AUTH_URL =
+  process.env.REGISTRY_AUTH_URL ?? 'http://registry-nginx/api/v1'
 
-function mapGroupsToRole(groups: string[]): 'admin' | 'registrar' | 'viewer' {
-  if (groups.includes('unilink-admin')) return 'admin'
-  if (groups.includes('unilink-registrar')) return 'registrar'
+function mapRegistryRoleToPortalRole(
+  role: string,
+): 'admin' | 'registrar' | 'viewer' {
+  if (role === 'super_admin') return 'admin'
+  if (role === 'node_admin') return 'admin'
+  if (role === 'staff') return 'viewer'
   return 'viewer'
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const parts = token.split('.')
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format')
+  }
+  const payload = parts[1]
+  const decoded = Buffer.from(payload, 'base64url').toString('utf-8')
+  return JSON.parse(decoded) as Record<string, unknown>
 }
 
 export const authConfig: NextAuthConfig = {
   providers: [
-    {
-      id: 'authentik',
-      name: 'Authentik',
-      type: 'oidc',
-      issuer: process.env.AUTHENTIK_ISSUER ?? 'https://auth.unilink.ac.th/application/o/unilink-portal/',
-      clientId: process.env.AUTHENTIK_CLIENT_ID ?? '',
-      clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? '',
-      authorization: {
-        // In Docker, the OIDC issuer is an internal hostname (e.g. registry-authentik:9000)
-        // but the browser must redirect to a browser-accessible URL (e.g. localhost:9000).
-        // AUTHENTIK_AUTHORIZATION_URL overrides the discovered authorization_endpoint.
-        ...(process.env.AUTHENTIK_AUTHORIZATION_URL
-          ? { url: process.env.AUTHENTIK_AUTHORIZATION_URL }
-          : {}),
-        params: {
-          scope: 'openid profile email groups',
-        },
+    CredentialsProvider({
+      id: 'credentials',
+      name: 'Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
-      profile(profile) {
-        const groups = (profile.groups as string[]) ?? []
-        return {
-          id: profile.sub as string,
-          name: (profile.name as string) ?? (profile.preferred_username as string) ?? '',
-          email: profile.email as string,
-          image: (profile.picture as string) ?? null,
-          role: mapGroupsToRole(groups),
+      async authorize(credentials) {
+        const email = credentials?.email as string | undefined
+        const password = credentials?.password as string | undefined
+
+        if (!email || !password) {
+          return null
+        }
+
+        try {
+          const response = await fetch(`${REGISTRY_AUTH_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          })
+
+          if (!response.ok) {
+            return null
+          }
+
+          const body = (await response.json()) as {
+            success: boolean
+            data: {
+              accessToken: string
+              refreshToken: string
+              expiresIn: number
+              tokenType: string
+            }
+          }
+
+          if (!body.success) {
+            return null
+          }
+
+          const { accessToken, refreshToken } = body.data
+
+          // Decode JWT to extract user info
+          const payload = decodeJwtPayload(accessToken)
+          const sub = (payload.sub as string) ?? ''
+          const userEmail = (payload.email as string) ?? email
+          const name = (payload.name as string) ?? ''
+          const role = (payload.role as string) ?? ''
+
+          return {
+            id: sub,
+            email: userEmail,
+            name,
+            role: mapRegistryRoleToPortalRole(role),
+            accessToken,
+            refreshToken,
+          }
+        } catch {
+          return null
         }
       },
-    },
+    }),
   ],
 
   session: {
@@ -80,13 +131,12 @@ export const authConfig: NextAuthConfig = {
   },
 
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       const t = token as Record<string, unknown>
       if (user) {
         t.role = user.role ?? 'viewer'
-      }
-      if (account?.access_token) {
-        t.accessToken = account.access_token
+        t.accessToken = (user as Record<string, unknown>).accessToken
+        t.refreshToken = (user as Record<string, unknown>).refreshToken
       }
       return token
     },
@@ -94,7 +144,8 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       const t = token as Record<string, unknown>
       session.user.id = (token.sub as string) ?? ''
-      session.user.role = (t.role as 'admin' | 'registrar' | 'viewer') ?? 'viewer'
+      session.user.role =
+        (t.role as 'admin' | 'registrar' | 'viewer') ?? 'viewer'
       session.accessToken = t.accessToken as string | undefined
       return session
     },

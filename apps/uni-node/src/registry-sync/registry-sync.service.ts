@@ -16,11 +16,11 @@ import type {
 @Injectable()
 export class RegistrySyncService implements OnModuleInit {
   private readonly logger = new Logger(RegistrySyncService.name)
-  private readonly registryUrl: string
+  private registryUrl: string
   private readonly nodeId: string
   private readonly nodeJwt: string
-  private readonly syncEnabled: boolean
-  private readonly syncCron: string
+  private syncEnabled: boolean
+  private syncCron: string
   private httpsAgent: https.Agent | undefined
 
   constructor(
@@ -416,6 +416,56 @@ export class RegistrySyncService implements OnModuleInit {
       academicYear: lastLog?.academicYear ?? null,
       semester: lastLog?.semester ?? null,
       courseCount: lastLog?.courseCount ?? null,
+    }
+  }
+
+  /**
+   * Apply sync configuration changes at runtime.
+   * Called by SettingsService when admin updates registry connection settings.
+   */
+  applySyncConfig(
+    registryUrl: string,
+    syncEnabled: boolean,
+    syncCron: string,
+  ): void {
+    this.registryUrl = registryUrl
+    this.logger.log(`Registry URL updated: ${registryUrl}`)
+
+    // Re-register cron job if schedule or enabled state changed
+    const cronChanged = syncCron !== this.syncCron
+    const enabledChanged = syncEnabled !== this.syncEnabled
+
+    this.syncEnabled = syncEnabled
+    this.syncCron = syncCron
+
+    if (cronChanged || enabledChanged) {
+      // Remove existing cron job
+      try {
+        this.schedulerRegistry.deleteCronJob('aggregate-sync')
+        this.logger.log('Removed existing aggregate-sync cron job')
+      } catch {
+        // Job may not exist yet
+      }
+
+      // Register new cron job if enabled
+      if (syncEnabled) {
+        try {
+          const job = new CronJob(syncCron, () => {
+            void this.handleAggregateCron()
+          })
+          this.schedulerRegistry.addCronJob('aggregate-sync', job)
+          job.start()
+          this.logger.log(
+            `Aggregate sync cron re-registered: "${syncCron}" for node ${this.nodeId}`,
+          )
+        } catch (error) {
+          this.logger.error(
+            `Failed to re-register aggregate cron: ${error instanceof Error ? error.message : String(error)}`,
+          )
+        }
+      } else {
+        this.logger.warn('Aggregate sync DISABLED by admin')
+      }
     }
   }
 }

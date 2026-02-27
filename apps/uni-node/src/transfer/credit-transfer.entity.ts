@@ -17,6 +17,10 @@ export class CreditTransferEntity {
   @Column({ name: 'student_id', length: 20 })
   studentId!: string
 
+  /** Central DID of the student (did:web:unilink.ac.th:id:{uuid}) */
+  @Column({ name: 'student_did', type: 'varchar', length: 255, nullable: true })
+  studentDid!: string | null
+
   @Column({ name: 'source_vc_id', length: 255 })
   sourceVcId!: string
 

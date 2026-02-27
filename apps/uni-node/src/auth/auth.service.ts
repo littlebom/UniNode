@@ -104,6 +104,52 @@ export class AuthService {
   }
 
   /**
+   * Link or create a local student record from a Registry JWT payload.
+   * Called when a student authenticates with a Registry-issued JWT for the first time.
+   *
+   * If the student already exists (by studentId), updates didUuid + didWeb.
+   * If the student doesn't exist, creates a new record.
+   */
+  async linkRegistryIdentity(payload: {
+    sub: string       // Registry identity UUID
+    did: string       // did:web:unilink.ac.th:id:{uuid}
+    studentId: string // localStudentId from enrollment
+  }): Promise<{ linked: boolean }> {
+    let student: import('../student/student.entity').StudentEntity | null = null
+    try {
+      student = await this.studentService.findByStudentId(payload.studentId)
+    } catch {
+      // Student not found — will create below
+    }
+
+    if (student) {
+      // Update existing student with Registry identity link
+      if (!student.didUuid) {
+        await this.studentService.update(payload.studentId, {
+          didUuid: payload.sub,
+          didWeb: payload.did,
+        })
+        this.logger.log(
+          `Student ${payload.studentId} linked to Registry identity: ${payload.did}`,
+        )
+      }
+      return { linked: true }
+    }
+
+    // Create new student record (first time this student accesses this node)
+    await this.studentService.create({
+      studentId: payload.studentId,
+      did: payload.did,
+      didUuid: payload.sub,
+      didWeb: payload.did,
+    })
+    this.logger.log(
+      `Student ${payload.studentId} created from Registry identity: ${payload.did}`,
+    )
+    return { linked: true }
+  }
+
+  /**
    * Register a DID and public key for a student.
    * Called after the wallet generates an Ed25519 keypair.
    */

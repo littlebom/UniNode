@@ -17,6 +17,14 @@ export class StudentEntity {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   did!: string | null
 
+  /** Registry student identity UUID (links to student_identities.id) */
+  @Column({ name: 'did_uuid', type: 'uuid', nullable: true })
+  didUuid!: string | null
+
+  /** Central DID: did:web:unilink.ac.th:id:{uuid} */
+  @Column({ name: 'did_web', type: 'varchar', length: 255, nullable: true })
+  didWeb!: string | null
+
   @Column({ name: 'wallet_endpoint', type: 'text', nullable: true })
   walletEndpoint!: string | null
 

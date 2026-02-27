@@ -160,6 +160,8 @@ export interface TransferResponse {
   id: string
   transferId: string
   studentId: string
+  /** Central DID of the student (did:web:unilink.ac.th:id:{uuid}) */
+  studentDid?: string
   sourceVcId: string
   sourceCourse: string
   targetNode: string

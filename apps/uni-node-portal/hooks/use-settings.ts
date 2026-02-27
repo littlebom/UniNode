@@ -3,7 +3,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { nodeApi } from '@/lib/api'
 import type { ApiResponse } from '@unilink/dto'
-import type { SISConfigFormValues } from '@/lib/schemas/settings-schemas'
+import type {
+  SISConfigFormValues,
+  RegistryConfigFormValues,
+} from '@/lib/schemas/settings-schemas'
 
 interface SISConfig {
   sisApiUrl: string
@@ -19,6 +22,17 @@ interface KeyInfo {
   keyType: string
   signingKeyPath: string
   didDocumentUrl: string
+}
+
+interface RegistryConnection {
+  registryUrl: string
+  nodeId: string
+  nodeName: string
+  nodeDid: string
+  syncEnabled: boolean
+  syncCron: string
+  lastSync: string | null
+  lastSyncCourseCount: number | null
 }
 
 interface TestConnectionResult {
@@ -69,4 +83,32 @@ export function useKeyInfo() {
   })
 }
 
-export type { SISConfig, KeyInfo, TestConnectionResult }
+export function useRegistryConnection() {
+  return useQuery<RegistryConnection>({
+    queryKey: ['settings', 'registry'],
+    queryFn: async () => {
+      const { data } = await nodeApi.get<ApiResponse<RegistryConnection>>(
+        '/settings/registry',
+      )
+      return data.data!
+    },
+  })
+}
+
+export function useUpdateRegistryConnection() {
+  const queryClient = useQueryClient()
+  return useMutation<RegistryConnection, Error, RegistryConfigFormValues>({
+    mutationFn: async (dto) => {
+      const { data } = await nodeApi.put<ApiResponse<RegistryConnection>>(
+        '/settings/registry',
+        dto,
+      )
+      return data.data!
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'registry'] })
+    },
+  })
+}
+
+export type { SISConfig, KeyInfo, RegistryConnection, TestConnectionResult }

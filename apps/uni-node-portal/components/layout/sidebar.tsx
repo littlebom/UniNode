@@ -51,6 +51,8 @@ function NavLinks({ collapsed }: { collapsed: boolean }): React.ReactElement {
   )
 }
 
+const nodeName = process.env.NEXT_PUBLIC_NODE_NAME ?? 'UniLink Portal'
+
 export function Sidebar(): React.ReactElement {
   const { sidebarCollapsed, toggleSidebarCollapsed, sidebarOpen, setSidebarOpen } = useUIStore()
 
@@ -70,7 +72,7 @@ export function Sidebar(): React.ReactElement {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
                 UL
               </div>
-              <span className="font-semibold text-foreground">UniLink Portal</span>
+              <span className="font-semibold text-foreground truncate">{nodeName}</span>
             </Link>
           )}
           <Button
@@ -110,7 +112,7 @@ export function Sidebar(): React.ReactElement {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
                 UL
               </div>
-              <span className="font-semibold text-foreground">UniLink Portal</span>
+              <span className="font-semibold text-foreground truncate">{nodeName}</span>
             </Link>
           </div>
           <ScrollArea className="flex-1 py-4">

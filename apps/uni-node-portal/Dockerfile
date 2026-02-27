@@ -21,8 +21,12 @@ COPY apps/uni-node-portal ./apps/uni-node-portal
 COPY tsconfig.base.json ./
 ARG NEXT_PUBLIC_API_URL=http://localhost/api/v1
 ARG NEXT_PUBLIC_NODE_API_URL=http://localhost/unilink/api/v1
+ARG NEXT_PUBLIC_NODE_NAME=มหาวิทยาลัยธรรมศาสตร์
+ARG NEXT_PUBLIC_NODE_ID=tu.ac.th
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_NODE_API_URL=$NEXT_PUBLIC_NODE_API_URL
+ENV NEXT_PUBLIC_NODE_NAME=$NEXT_PUBLIC_NODE_NAME
+ENV NEXT_PUBLIC_NODE_ID=$NEXT_PUBLIC_NODE_ID
 RUN pnpm --filter @unilink/dto --filter @unilink/ui build && \
     pnpm --filter uni-node-portal build
 

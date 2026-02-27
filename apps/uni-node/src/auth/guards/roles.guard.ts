@@ -36,8 +36,8 @@ export class RolesGuard implements CanActivate {
       )
     }
 
-    // node_admin has access to everything in uni-node
-    if (user.role === 'node_admin') {
+    // node_admin and super_admin (Registry) have access to everything in uni-node
+    if (user.role === 'node_admin' || user.role === 'super_admin') {
       return true
     }
 

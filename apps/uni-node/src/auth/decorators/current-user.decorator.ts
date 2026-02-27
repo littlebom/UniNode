@@ -6,6 +6,14 @@ export interface AuthenticatedUser {
   studentId?: string
   nodeId?: string
   role: string
+  /** Registry JWT: central DID (did:web:unilink.ac.th:id:{uuid}) */
+  did?: string
+  /** Registry JWT: active enrollments */
+  enrollments?: Array<{
+    nodeId: string
+    localStudentId: string
+    status: string
+  }>
 }
 
 export const CurrentUser = createParamDecorator(

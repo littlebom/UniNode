@@ -46,6 +46,14 @@ export class StudentRepository {
     return this.repo.findOne({ where: { id } })
   }
 
+  async findByDidUuid(didUuid: string): Promise<StudentEntity | null> {
+    return this.repo.findOne({ where: { didUuid } })
+  }
+
+  async findByDidWeb(didWeb: string): Promise<StudentEntity | null> {
+    return this.repo.findOne({ where: { didWeb } })
+  }
+
   async create(data: Partial<StudentEntity>): Promise<StudentEntity> {
     return this.dataSource.transaction(async (manager) => {
       const student = manager.create(StudentEntity, data)

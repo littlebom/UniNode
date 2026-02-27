@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Database, Key, ChevronRight } from 'lucide-react'
+import { Database, Key, Globe, ChevronRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Card,
@@ -35,6 +35,14 @@ const settingsCards: SettingsCardConfig[] = [
     href: '/settings/keys',
     icon: Key,
     iconColorClass: 'text-violet-600 bg-violet-50',
+  },
+  {
+    title: 'Registry Connection',
+    description:
+      'ดูข้อมูลการเชื่อมต่อกับ UniRegistry, Node ID และสถานะ Aggregate Sync',
+    href: '/settings/registry',
+    icon: Globe,
+    iconColorClass: 'text-emerald-600 bg-emerald-50',
   },
 ]
 

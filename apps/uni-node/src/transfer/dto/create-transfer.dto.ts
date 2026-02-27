@@ -20,4 +20,9 @@ export class CreateTransferDto {
   @IsString()
   @IsOptional()
   targetCourseId?: string
+
+  /** Central DID of the student (did:web:unilink.ac.th:id:{uuid}) */
+  @IsString()
+  @IsOptional()
+  studentDid?: string
 }

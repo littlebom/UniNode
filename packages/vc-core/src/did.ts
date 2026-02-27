@@ -110,3 +110,93 @@ export function getDIDDocument(
     assertionMethod: [`${did}#key-1`],
   }
 }
+
+// ─── Hybrid DID Support (did:web + did:key) ──────────────────────
+
+/**
+ * Resolve any supported DID method to a DID Document.
+ *
+ * - `did:key:z6Mk...` → resolved locally (no network)
+ * - `did:web:...` → resolved via HTTPS
+ *
+ * @param did - DID string to resolve
+ * @param agent - Veramo agent (required for did:web resolution)
+ * @returns DID Document
+ */
+export async function resolveAnyDID(
+  did: string,
+  agent?: VeramoAgent,
+): Promise<DIDDocument> {
+  if (did.startsWith('did:key:')) {
+    const { resolveDidKey } = await import('@unilink/crypto')
+    return resolveDidKey(did) as DIDDocument
+  }
+
+  if (did.startsWith('did:web:')) {
+    if (!agent) {
+      // For did:web, we can build the URL and fetch directly
+      const url = didWebToUrl(did)
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(
+          `Failed to resolve DID ${did}: HTTP ${response.status}`,
+        )
+      }
+      return (await response.json()) as DIDDocument
+    }
+    return resolveDID(agent, did)
+  }
+
+  throw new Error(`Unsupported DID method: ${did}`)
+}
+
+/**
+ * Build a DID Document for a student identity hosted at Registry.
+ *
+ * The document includes `alsoKnownAs` linking the did:web to the did:key,
+ * enabling offline verification as a fallback.
+ *
+ * @param registryDomain - Registry domain (e.g., 'unilink.ac.th')
+ * @param uuid - Student identity UUID
+ * @param publicKeyMultibase - Ed25519 public key in 'z' + base64 format
+ * @param didKey - The did:key identifier for this student
+ * @returns DID Document with alsoKnownAs
+ *
+ * @example
+ * ```ts
+ * const doc = buildStudentDIDDocument(
+ *   'unilink.ac.th',
+ *   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+ *   'z6MkhaXgBZDvotDk...',
+ *   'did:key:z6MkhaXgBZDvotDk...',
+ * )
+ * // doc.id = "did:web:unilink.ac.th:id:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ * // doc.alsoKnownAs = ["did:key:z6MkhaXgBZDvotDk..."]
+ * ```
+ */
+export function buildStudentDIDDocument(
+  registryDomain: string,
+  uuid: string,
+  publicKeyMultibase: string,
+  didKey: string,
+): DIDDocument & { alsoKnownAs: string[] } {
+  const did = `did:web:${registryDomain}:id:${uuid}`
+  return {
+    '@context': [
+      'https://www.w3.org/ns/did/v1',
+      'https://w3id.org/security/suites/ed2020/v1',
+    ],
+    id: did,
+    alsoKnownAs: [didKey],
+    verificationMethod: [
+      {
+        id: `${did}#key-1`,
+        type: 'Ed25519VerificationKey2020',
+        controller: did,
+        publicKeyMultibase,
+      },
+    ],
+    authentication: [`${did}#key-1`],
+    assertionMethod: [`${did}#key-1`],
+  }
+}

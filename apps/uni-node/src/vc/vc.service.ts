@@ -7,7 +7,7 @@ import { CryptoService } from '../crypto/crypto.service'
 import { StudentService } from '../student/student.service'
 import { CourseService } from '../course/course.service'
 import { IssueVcDto } from './dto/issue-vc.dto'
-import { createVC, verifyVC, verifyVP, isRevoked, didWebToUrl } from '@unilink/vc-core'
+import { createVC, verifyVC, verifyVP, isRevoked, didWebToUrl, resolveAnyDID } from '@unilink/vc-core'
 import type { DIDDocument, VPVerifyResult } from '@unilink/vc-core'
 import { verifyRaw } from '@unilink/crypto'
 import { UniLinkException, UniLinkErrorCode } from '@unilink/dto'
@@ -72,7 +72,8 @@ export class VCService {
     const { index, statusListUrl } = await this.statusListService.allocateIndex()
 
     // 5. Lookup course data for enriched credentialSubject
-    const subjectDID = student.did ?? `did:web:${domain}:students:${dto.studentId}`
+    // Prefer Registry DID (didWeb) > old node-tied DID > constructed fallback
+    const subjectDID = student.didWeb ?? student.did ?? `did:web:${domain}:students:${dto.studentId}`
     let courseName: string = dto.courseId
     let courseNameTH: string | undefined
     let credits = 3
@@ -345,13 +346,42 @@ export class VCService {
 
   /**
    * Resolve a verification method ID to its public key multibase.
-   * Fetches the DID Document via HTTPS (did:web method).
+   * Supports both did:web (fetch via HTTPS) and did:key (resolve locally).
    *
-   * @param verificationMethodId - e.g. 'did:web:tu.ac.th#key-1'
+   * @param verificationMethodId - e.g. 'did:web:tu.ac.th#key-1' or 'did:key:z6Mk...#z6Mk...'
    * @returns Public key in multibase format (z + base64)
    */
   async resolvePublicKey(verificationMethodId: string): Promise<string> {
     const did = verificationMethodId.split('#')[0]
+
+    // did:key — resolve locally (no network required)
+    if (did.startsWith('did:key:')) {
+      try {
+        const didDoc = await resolveAnyDID(did)
+        const vm = didDoc.verificationMethod.find(
+          (v) => v.id === verificationMethodId,
+        )
+        if (!vm) {
+          throw new UniLinkException(
+            UniLinkErrorCode.VC_SIGNATURE_INVALID,
+            400,
+            `Verification method ${verificationMethodId} not found in did:key document`,
+            `ไม่พบ verification method ${verificationMethodId} ใน DID document`,
+          )
+        }
+        return vm.publicKeyMultibase
+      } catch (error) {
+        if (error instanceof UniLinkException) throw error
+        throw new UniLinkException(
+          UniLinkErrorCode.VC_ISSUER_UNKNOWN,
+          400,
+          `Failed to resolve did:key: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `ไม่สามารถ resolve did:key ได้`,
+        )
+      }
+    }
+
+    // did:web — fetch via HTTPS
     const url = didWebToUrl(did)
 
     let response: Response

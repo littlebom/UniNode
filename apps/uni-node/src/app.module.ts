@@ -25,6 +25,7 @@ import { CourseModule } from './course/course.module'
 import { RegistrySyncModule } from './registry-sync/registry-sync.module'
 import { ExternalModule } from './external/external.module'
 import { MetricsModule } from './metrics/metrics.module'
+import { SettingsModule } from './settings/settings.module'
 
 @Module({
   imports: [
@@ -117,6 +118,7 @@ import { MetricsModule } from './metrics/metrics.module'
     RegistrySyncModule,
     ExternalModule,
     MetricsModule,
+    SettingsModule,
   ],
   providers: [
     // APP_GUARD order: ThrottlerGuard → JwtAuthGuard → RolesGuard

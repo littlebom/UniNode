@@ -34,8 +34,9 @@ export class TransferService {
    * 5. No duplicate transfer for same sourceVcId + targetNode
    */
   async createTransferRequest(dto: CreateTransferDto): Promise<TransferResponse> {
-    // 1. Validate student exists
-    await this.studentService.findByStudentId(dto.studentId)
+    // 1. Validate student exists and resolve DID
+    const student = await this.studentService.findByStudentId(dto.studentId)
+    const studentDid = dto.studentDid ?? student.didWeb ?? student.did ?? null
 
     // 2. Validate source VC exists and is active
     const sourceVc = await this.vcRepo.findByVcId(dto.sourceVcId)
@@ -106,6 +107,7 @@ export class TransferService {
     const entity = await this.transferRepo.create({
       transferId,
       studentId: dto.studentId,
+      studentDid,
       sourceVcId: dto.sourceVcId,
       sourceCourse: dto.sourceCourseId,
       targetNode: dto.targetNodeId,
@@ -260,6 +262,7 @@ export class TransferService {
       id: entity.id,
       transferId: entity.transferId,
       studentId: entity.studentId,
+      studentDid: entity.studentDid ?? undefined,
       sourceVcId: entity.sourceVcId,
       sourceCourse: entity.sourceCourse,
       targetNode: entity.targetNode,

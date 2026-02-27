@@ -52,9 +52,25 @@ export class StudentService {
     return student
   }
 
+  async findByDidWeb(didWeb: string): Promise<StudentEntity> {
+    const student = await this.studentRepository.findByDidWeb(didWeb)
+    if (!student) {
+      throw new UniLinkException(
+        UniLinkErrorCode.STUDENT_NOT_FOUND,
+        404,
+        `Student with DID ${didWeb} not found`,
+        `ไม่พบนักศึกษาที่มี DID ${didWeb}`,
+      )
+    }
+    return student
+  }
+
   async create(data: {
     studentId: string
     did?: string
+    didUuid?: string
+    didWeb?: string
+    publicKey?: string
     walletEndpoint?: string
     fcmToken?: string
   }): Promise<StudentEntity> {
@@ -71,6 +87,9 @@ export class StudentService {
     const student = await this.studentRepository.create({
       studentId: data.studentId,
       did: data.did ?? null,
+      didUuid: data.didUuid ?? null,
+      didWeb: data.didWeb ?? null,
+      publicKey: data.publicKey ?? null,
       walletEndpoint: data.walletEndpoint ?? null,
       fcmToken: data.fcmToken ?? null,
       status: 'active',
@@ -82,7 +101,7 @@ export class StudentService {
 
   async update(
     studentId: string,
-    data: Partial<Pick<StudentEntity, 'did' | 'walletEndpoint' | 'fcmToken' | 'status' | 'publicKey'>>,
+    data: Partial<Pick<StudentEntity, 'did' | 'didUuid' | 'didWeb' | 'walletEndpoint' | 'fcmToken' | 'status' | 'publicKey'>>,
   ): Promise<StudentEntity> {
     await this.findByStudentId(studentId) // Throws if not found
 

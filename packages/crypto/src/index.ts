@@ -19,3 +19,10 @@ export {
   VaultCrypto,
   type VaultConfig,
 } from './vault'
+
+export {
+  publicKeyToDidKey,
+  didKeyToPublicKey,
+  resolveDidKey,
+  type DIDDocument,
+} from './did-key'

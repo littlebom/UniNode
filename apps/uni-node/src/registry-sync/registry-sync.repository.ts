@@ -66,18 +66,18 @@ export class RegistrySyncRepository {
       .select('vc.courseId', 'courseId')
       .addSelect('COUNT(vc.id)', 'passedCount')
       .addSelect(
-        "AVG(COALESCE((vc.vcDocument->'credentialSubject'->>'gradePoint')::numeric, 0))",
+        "AVG(COALESCE((\"vc\".\"vc_document\"->'credentialSubject'->>'gradePoint')::numeric, 0))",
         'avgGradePoint',
       )
       .where('vc.vcType = :vcType', { vcType: 'CourseCreditCredential' })
       .andWhere('vc.status = :status', { status: 'active' })
       .andWhere('vc.courseId IS NOT NULL')
       .andWhere(
-        "vc.vcDocument->'credentialSubject'->>'academicYear' = :year",
+        "\"vc\".\"vc_document\"->'credentialSubject'->>'academicYear' = :year",
         { year: params.academicYear },
       )
       .andWhere(
-        "vc.vcDocument->'credentialSubject'->>'semester' = :semester",
+        "\"vc\".\"vc_document\"->'credentialSubject'->>'semester' = :semester",
         { semester: params.semester },
       )
       .groupBy('vc.courseId')
